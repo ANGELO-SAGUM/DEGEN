@@ -12,6 +12,7 @@ contract DegenToken is ERC20, Ownable {
     }
 
     mapping(uint8 => StoreItem) public store;
+    mapping(address => mapping(uint8 => uint256)) public redeemedItems;
 
     constructor() ERC20("Degen", "DGN") {
         // Initialize store items
@@ -38,7 +39,9 @@ contract DegenToken is ERC20, Ownable {
         require(balanceOf(_msgSender()) >= item.price, "Insufficient balance to redeem this item");
 
         _burn(_msgSender(), item.price);
-        // Logic to deliver the in-game item goes here
+
+        // Deliver the in-game item
+        redeemedItems[_msgSender()][itemId] += 1;
     }
 
     // Function for anyone to burn their own tokens
@@ -99,5 +102,10 @@ contract DegenToken is ERC20, Ownable {
 
         _burn(_msgSender(), item.price);
         // Logic to store the item goes here
+    }
+
+    // Function to check redeemed items for a player
+    function checkRedeemedItems(address player, uint8 itemId) public view returns (uint256) {
+        return redeemedItems[player][itemId];
     }
 }
