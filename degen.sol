@@ -15,52 +15,42 @@ contract DegenToken is ERC20, Ownable {
     mapping(address => mapping(uint8 => uint256)) public redeemedItems;
 
     constructor() ERC20("Degen", "DGN") {
-        // Initialize store items
         store[1] = StoreItem("Jordan 1", 500);
         store[2] = StoreItem("Jordan 2", 250);
         store[3] = StoreItem("Jordan 3", 150);
     }
 
-    // Function to mint new tokens, only accessible by the contract owner
-    function mint(address to, uint256 amount) public onlyOwner {
-        _mint(to, amount);
+    function mint(address recipient, uint256 amount) public onlyOwner {
+        _mint(recipient, amount);
     }
 
-    // Function for players to transfer tokens to others
-    function transferTokens(address to, uint256 amount) public returns (bool) {
-        _transfer(_msgSender(), to, amount);
+    function transferTokens(address recipient, uint256 amount) public returns (bool) {
+        _transfer(msg.sender, recipient, amount);
         return true;
     }
 
-    // Function for players to redeem tokens for in-game items
     function redeemTokens(uint8 itemId) public {
         StoreItem memory item = store[itemId];
         require(item.price > 0, "Item does not exist");
-        require(balanceOf(_msgSender()) >= item.price, "Insufficient balance to redeem this item");
+        require(balanceOf(msg.sender) >= item.price, "Insufficient balance");
 
-        _burn(_msgSender(), item.price);
-
-        // Deliver the in-game item
-        redeemedItems[_msgSender()][itemId] += 1;
+        _burn(msg.sender, item.price);
+        redeemedItems[msg.sender][itemId] += 1;
     }
 
-    // Function for anyone to burn their own tokens
     function burnTokens(uint256 amount) public {
-        _burn(_msgSender(), amount);
+        _burn(msg.sender, amount);
     }
 
-    // Function to check token balance of any player
     function checkBalance(address account) public view returns (uint256) {
         return balanceOf(account);
     }
 
-    // Function to get store item details
-    function getStoreItem(uint8 itemId) public view returns (string memory name, uint256 price) {
+    function getStoreItem(uint8 itemId) public view returns (string memory, uint256) {
         StoreItem memory item = store[itemId];
         return (item.name, item.price);
     }
 
-    // Function to get all store items as a single string
     function getAllStoreItems() public view returns (string memory) {
         string memory items = "";
         for (uint8 i = 1; i <= 3; i++) {
@@ -69,7 +59,6 @@ contract DegenToken is ERC20, Ownable {
         return items;
     }
 
-    // Helper function to convert uint to string
     function uint2str(uint _i) internal pure returns (string memory) {
         if (_i == 0) {
             return "0";
@@ -83,28 +72,25 @@ contract DegenToken is ERC20, Ownable {
         bytes memory bstr = new bytes(len);
         uint k = len;
         while (_i != 0) {
-            k = k-1;
+            k--;
             uint8 temp = (48 + uint8(_i - _i / 10 * 10));
-            bytes1 b1 = bytes1(temp);
-            bstr[k] = b1;
+            bstr[k] = bytes1(temp);
             _i /= 10;
         }
         return string(bstr);
     }
 
-    // Function for users to store a store item and deduct the equivalent token balance
     function storeItem(uint8 itemId) public {
         StoreItem memory item = store[itemId];
         require(item.price > 0, "Item does not exist");
 
-        uint256 userBalance = balanceOf(_msgSender());
-        require(userBalance >= item.price, "Insufficient balance to store this item");
+        uint256 userBalance = balanceOf(msg.sender);
+        require(userBalance >= item.price, "Insufficient balance");
 
-        _burn(_msgSender(), item.price);
-        // Logic to store the item goes here
+        _burn(msg.sender, item.price);
+        
     }
 
-    // Function to check redeemed items for a player
     function checkRedeemedItems(address player, uint8 itemId) public view returns (uint256) {
         return redeemedItems[player][itemId];
     }
